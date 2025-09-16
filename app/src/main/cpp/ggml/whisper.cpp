@@ -3561,6 +3561,11 @@ int whisper_tokenize(struct whisper_context * ctx, const char * text, whisper_to
 
     if (n_max_tokens < (int) res.size()) {
         WHISPER_LOG_ERROR("%s: too many resulting tokens: %d (max %d)\n", __func__, (int) res.size(), n_max_tokens);
+
+        size_t offs = res.size() - n_max_tokens;
+        for (int i = 0; i < n_max_tokens; i++) {
+            tokens[i] = res[i + offs];
+        }
         return -1;
     }
 
@@ -5160,7 +5165,10 @@ int whisper_full_with_state(
         // initial prompt
         if (!params.prompt_tokens && params.initial_prompt) {
             prompt_tokens.resize(1024);
-            prompt_tokens.resize(whisper_tokenize(ctx, params.initial_prompt, prompt_tokens.data(), prompt_tokens.size()));
+            int result = whisper_tokenize(ctx, params.initial_prompt, prompt_tokens.data(), prompt_tokens.size());
+            if(result != -1) {
+                prompt_tokens.resize(result);
+            }
             params.prompt_tokens   = prompt_tokens.data();
             params.prompt_n_tokens = prompt_tokens.size();
         }
